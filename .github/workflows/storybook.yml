@@ -64,6 +64,15 @@ jobs:
           # Generate markdown
           python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
           
+          # Verify the generated markdown file
+          if [ -f "slides/story.md" ]; then
+            echo "Markdown file generated successfully:"
+            head -10 "slides/story.md"
+          else
+            echo "Error: Markdown file not generated"
+            exit 1
+          fi
+          
           # Verify output
           echo "Generated files in slides/:"
           ls -la slides/ || echo "No files in slides/ directory"
@@ -85,11 +94,26 @@ jobs:
 
       - name: Build HTML
         run: |
+          # Check if markdown file exists
+          if [ ! -f "slides/story.md" ]; then
+            echo "Error: slides/story.md not found"
+            ls -la slides/
+            exit 1
+          fi
+          
+          # Convert markdown to HTML
           marp slides/story.md --html --output dist/index.html
-          echo "Generated HTML file:"
-          ls -la dist/index.html
-          echo "First 5 lines of HTML:"
-          head -n 5 dist/index.html
+          
+          # Verify HTML generation
+          if [ -f "dist/index.html" ]; then
+            echo "HTML file generated successfully:"
+            ls -la dist/index.html
+            echo "First 5 lines of HTML:"
+            head -n 5 dist/index.html
+          else
+            echo "Error: HTML file not generated"
+            exit 1
+          fi
 
       - name: Copy images (if any)
         run: |
