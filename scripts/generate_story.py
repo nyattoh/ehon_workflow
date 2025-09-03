@@ -180,7 +180,9 @@ def embed_placeholders_and_images(marp_md: str, out_md_path: str) -> str:
     at the top of each slide (except the very first title slide).
     Images are saved under slides/images relative to out_md_path.
     """
+    print(f'[DEBUG] embed_placeholders_and_images: input length = {len(marp_md)}', file=sys.stderr)
     slides = _split_slides(marp_md)
+    print(f'[DEBUG] _split_slides returned {len(slides)} slides', file=sys.stderr)
     if not slides:
         return marp_md
     md_dir = os.path.dirname(out_md_path)
@@ -243,7 +245,10 @@ def main():
         content = build_marp_template(title, synopsis)
 
     # Embed SVG placeholders as images
+    print(f'[DEBUG] Content before image processing: {len(content)} characters', file=sys.stderr)
+    print(f'[DEBUG] First 300 chars: {content[:300]}', file=sys.stderr)
     content_with_images = embed_placeholders_and_images(content, args.out)
+    print(f'[DEBUG] Content after image processing: {len(content_with_images)} characters', file=sys.stderr)
 
     with open(args.out, 'w', encoding='utf-8') as f:
         f.write(content_with_images)
