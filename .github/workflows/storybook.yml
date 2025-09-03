@@ -10,9 +10,6 @@ permissions:
   pages: write
   id-token: write
 
-env:
-  PYTHONUNBUFFERED: '1'
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,50 +27,19 @@ jobs:
 
       - name: Install Python deps
         run: |
-          pip install --upgrade pip
           pip install google-generativeai
 
       - name: Generate Marp Markdown via Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Create directories with verbose output
           mkdir -p slides dist
-          echo "Current directory: $(pwd)"
-          echo "Directory contents:"
-          ls -la
-          
-          # Find story file
-          FILE=$(git diff --name-only HEAD~1 2>/dev/null | grep '^stories/.*\.txt' | head -n1 || true)
-          if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
-            echo "No changed story files found, looking for any story file..."
-            FILE=$(git ls-files 'stories/*.txt' | head -n1 || true)
+          FILE=$(git diff --name-only HEAD~1 | grep '^stories/.*\.txt' | head -n1)
+          if [ -z "$FILE" ]; then
+            # 直pushで検出できないときは最新変更ファイルをフォールバック
+            FILE=$(git ls-files stories/*.txt | head -n1)
           fi
-          
-          if [ -z "$FILE" ] || [ ! -f "$FILE" ]; then
-            echo "Error: No story files found in stories/ directory"
-            echo "Creating a sample story file..."
-            mkdir -p stories
-            echo -e "題名: サンプルストーリー\n\nこれはテスト用のサンプルストーリーです。\nこのファイルは自動生成されました。" > stories/sample.txt
-            FILE="stories/sample.txt"
-          fi
-          
-          echo "Using story file: $FILE"
-          ls -la "$(dirname "$FILE")"
-          
-          # Generate markdown
           python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
-          
-          # Verify output
-          echo "Generated files in slides/:"
-          ls -la slides/ || echo "No files in slides/ directory"
-          if [ -f "slides/story.md" ]; then
-            echo "First 10 lines of generated markdown:"
-            head -n 10 "slides/story.md"
-          else
-            echo "Error: Failed to generate story.md"
-            exit 1
-          fi
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -85,13 +51,6 @@ jobs:
 
       - name: Build HTML
         run: marp --html --input-dir slides --output dist
-
-      - name: Copy images (if any)
-        run: |
-          if [ -d slides/images ]; then
-            mkdir -p dist/images
-            cp -r slides/images/* dist/images/
-          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
