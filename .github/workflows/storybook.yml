@@ -1,0 +1,69 @@
+name: Storybook -> Pages
+on:
+  push:
+    paths:
+      - 'stories/**/*.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Pages (required by Pages actions)
+        uses: actions/configure-pages@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Python deps
+        run: |
+          pip install google-generativeai
+
+      - name: Generate Marp Markdown via Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          mkdir -p slides dist
+          FILE=$(git diff --name-only HEAD~1 | grep '^stories/.*\.txt' | head -n1)
+          if [ -z "$FILE" ]; then
+            # 直pushで検出できないときは最新変更ファイルをフォールバック
+            FILE=$(git ls-files stories/*.txt | head -n1)
+          fi
+          python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Marp CLI
+        run: npm i -g @marp-team/marp-cli
+
+      - name: Build HTML
+        run: marp --html --input-dir slides --output dist
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
