@@ -54,11 +54,16 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
     user_prompt = f'''次の題名とあらすじから、Marp対応のMarkdownスライドを生成してください。
 
 【重要】以下の形式を厳密に守ってください：
+- 最初に必ずMarpフロントマターを含める：
+  ---
+  marp: true
+  paginate: true
+  title: {title}
+  ---
 - スライド1: タイトルだけ大きく（著者名は省略可）
 - スライド2〜8: 1枚に2〜5行、やさしい短文で。各スライドの間に必ず「---」を入れる
 - 最後のスライド: おわり と ひとこと（前向きな締め）
 - 画像は入れない（テキストのみ）
-- 出力にはMarpフロントマターを必ず含める（marp: true, title, paginate: true）
 - 重要: コードブロック（```markdown）で囲まず、生のMarkdownテキストのみを出力してください
 - 重要: 各スライドの間に必ず「---」を入れて、最低6〜8枚のスライドを作成してください
 
