@@ -43,7 +43,8 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
     """
     import google.generativeai as genai
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_name)
+    # Pass system instruction at model creation (Gemini does not accept a "system" role in messages)
+    model = genai.GenerativeModel(model_name, system_instruction=system_preamble)
 
     system_preamble = (
         "You are a children picture-book writer and editor. "
@@ -61,10 +62,8 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
 あらすじ:
 {synopsis}
 '''
-    res = model.generate_content([
-        {"role": "system", "parts": system_preamble},
-        {"role": "user", "parts": user_prompt},
-    ])
+    # Send only the user prompt; roles array with "system" is not supported
+    res = model.generate_content(user_prompt)
     text = getattr(res, 'text', None) or (res.candidates[0].content.parts[0].text if getattr(res, 'candidates', None) else None)
     if not text:
         raise RuntimeError('Empty response from Gemini')

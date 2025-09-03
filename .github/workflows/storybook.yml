@@ -62,16 +62,16 @@ jobs:
           ls -la "$(dirname "$FILE")"
           
           # Generate markdown
-          python scripts/generate_story.py --input "$FILE" --out "slides/index.md"
+          python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
           
           # Verify output
           echo "Generated files in slides/:"
           ls -la slides/ || echo "No files in slides/ directory"
-          if [ -f "slides/index.md" ]; then
+          if [ -f "slides/story.md" ]; then
             echo "First 10 lines of generated markdown:"
-            head -n 10 "slides/index.md"
+            head -n 10 "slides/story.md"
           else
-            echo "Error: Failed to generate index.md"
+            echo "Error: Failed to generate story.md"
             exit 1
           fi
 
@@ -84,7 +84,7 @@ jobs:
         run: npm i -g @marp-team/marp-cli
 
       - name: Build HTML
-        run: marp --html --input-dir slides --output dist
+        run: marp --html slides/story.md -o dist/index.html
 
       - name: Copy images (if any)
         run: |
