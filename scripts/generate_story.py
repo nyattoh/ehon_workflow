@@ -216,10 +216,14 @@ def main():
     api_key = os.getenv('GEMINI_API_KEY')
     content = None
     if api_key:
+        print(f'[INFO] Using Gemini API with model: {args.model}', file=sys.stderr)
         try:
             content = build_marp_from_gemini(title, synopsis, args.model, api_key)
+            print('[INFO] Gemini generation successful', file=sys.stderr)
         except Exception as e:
             print(f"[WARN] Gemini generation failed, falling back to template: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc(file=sys.stderr)
     else:
         print('[INFO] GEMINI_API_KEY not set. Using template output.', file=sys.stderr)
 

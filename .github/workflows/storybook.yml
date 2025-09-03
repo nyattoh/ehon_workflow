@@ -61,8 +61,8 @@ jobs:
           echo "Using story file: $FILE"
           ls -la "$(dirname "$FILE")"
           
-          # Generate markdown (force template mode for now)
-          GEMINI_API_KEY="" python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
+          # Generate markdown with Gemini API
+          python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
           
           # Verify the generated markdown file
           if [ -f "slides/story.md" ]; then
