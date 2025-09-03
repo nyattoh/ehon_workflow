@@ -33,12 +33,12 @@ jobs:
           pip install --upgrade pip
           pip install google-generativeai
 
-      - name: Generate Marp Markdown via Gemini
+      - name: Generate HTML Slides via Gemini
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           # Create directories with verbose output
-          mkdir -p slides dist
+          mkdir -p dist
           echo "Current directory: $(pwd)"
           echo "Directory contents:"
           ls -la
@@ -61,90 +61,41 @@ jobs:
           echo "Using story file: $FILE"
           ls -la "$(dirname "$FILE")"
           
-          # Generate markdown with Gemini API
-          python scripts/generate_story.py --input "$FILE" --out "slides/story.md"
+          # Generate HTML slides with Gemini API
+          python scripts/generate_html_story.py --input "$FILE" --out "dist/index.html"
           
-          # Verify the generated markdown file
-          if [ -f "slides/story.md" ]; then
-            echo "Markdown file generated successfully:"
-            echo "File size: $(wc -c < slides/story.md) bytes"
-            echo "First 20 lines:"
-            head -20 "slides/story.md"
-            echo "Last 10 lines:"
-            tail -10 "slides/story.md"
+          # Verify the generated HTML file
+          if [ -f "dist/index.html" ]; then
+            echo "HTML file generated successfully:"
+            echo "File size: $(wc -c < dist/index.html) bytes"
+            echo "First 10 lines:"
+            head -10 "dist/index.html"
           else
-            echo "Error: Markdown file not generated"
-            echo "Contents of slides/ directory:"
-            ls -la slides/ || echo "slides/ directory does not exist"
+            echo "Error: HTML file not generated"
+            echo "Contents of dist/ directory:"
+            ls -la dist/ || echo "dist/ directory does not exist"
             exit 1
           fi
           
           # Verify output
-          echo "Generated files in slides/:"
-          ls -la slides/ || echo "No files in slides/ directory"
-          if [ -f "slides/story.md" ]; then
-            echo "First 10 lines of generated markdown:"
-            head -n 10 "slides/story.md"
-          else
-            echo "Error: Failed to generate story.md"
-            exit 1
-          fi
+          echo "Generated files in dist/:"
+          ls -la dist/ || echo "No files in dist/ directory"
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Install Marp CLI
-        run: npm i -g @marp-team/marp-cli
-
-      - name: Build HTML
+      - name: Verify final output
         run: |
-          # Check if markdown file exists
-          if [ ! -f "slides/story.md" ]; then
-            echo "Error: slides/story.md not found"
-            ls -la slides/
-            exit 1
-          fi
-          
-          # Convert markdown to HTML
-          marp slides/story.md --html --output dist/index.html
-          
-          # Verify HTML generation
-          if [ -f "dist/index.html" ]; then
-            echo "HTML file generated successfully:"
-            ls -la dist/index.html
-            echo "First 5 lines of HTML:"
-            head -n 5 dist/index.html
-          else
-            echo "Error: HTML file not generated"
-            exit 1
-          fi
-
-      - name: Copy images and markdown (if any)
-        run: |
-          # Copy markdown file to dist
-          if [ -f slides/story.md ]; then
-            cp slides/story.md dist/
-            echo "Copied story.md to dist/"
-          fi
-          
-          # Copy images if any
-          if [ -d slides/images ]; then
-            mkdir -p dist/images
-            cp -r slides/images/* dist/images/
-            echo "Copied images from slides/images/ to dist/images/"
-            echo "Image files found:"
-            ls -la dist/images/
-            echo "File types:"
-            file dist/images/* 2>/dev/null || echo "No files to check"
-          else
-            echo "No images directory found in slides/"
-          fi
-          
           # Show final dist contents
           echo "Final dist directory contents:"
           ls -la dist/
+          
+          # Verify HTML file exists and has content
+          if [ -f "dist/index.html" ]; then
+            echo "HTML file size: $(wc -c < dist/index.html) bytes"
+            echo "HTML file contains slides:"
+            grep -c "class=\"slide\"" dist/index.html || echo "No slides found"
+          else
+            echo "Error: No HTML file generated"
+            exit 1
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
