@@ -43,14 +43,14 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
     """
     import google.generativeai as genai
     genai.configure(api_key=api_key)
-    # Pass system instruction at model creation (Gemini does not accept a "system" role in messages)
-    model = genai.GenerativeModel(model_name, system_instruction=system_preamble)
-
+    
     system_preamble = (
         "You are a children picture-book writer and editor. "
         "Generate concise Japanese text suitable for picture-book slides. "
         "Keep sentences short and friendly."
     )
+    # Pass system instruction at model creation (Gemini does not accept a "system" role in messages)
+    model = genai.GenerativeModel(model_name, system_instruction=system_preamble)
     user_prompt = f'''次の題名とあらすじから、Marp対応のMarkdownスライドを生成してください。
 - スライド1: タイトルだけ大きく（著者名は省略可）
 - スライド2以降: 1枚に2〜5行、やさしい短文で。
