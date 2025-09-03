@@ -57,6 +57,7 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
 - 最後のスライド: おわり と ひとこと（前向きな締め）
 - 画像は入れない（テキストのみ）
 - 出力にはMarpフロントマターを必ず含める（marp: true, title, paginate: true）。
+- 重要: コードブロック（```markdown）で囲まず、生のMarkdownテキストのみを出力してください。
 
 題名: {title}
 あらすじ:
@@ -67,7 +68,16 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
     text = getattr(res, 'text', None) or (res.candidates[0].content.parts[0].text if getattr(res, 'candidates', None) else None)
     if not text:
         raise RuntimeError('Empty response from Gemini')
-    return text
+    
+    # Remove code block markers if present
+    if text.startswith('```markdown'):
+        text = text[11:]  # Remove ```markdown
+    if text.startswith('```'):
+        text = text[3:]   # Remove ```
+    if text.endswith('```'):
+        text = text[:-3]  # Remove trailing ```
+    
+    return text.strip()
 
 
 def build_marp_template(title: str, synopsis: str) -> str:
