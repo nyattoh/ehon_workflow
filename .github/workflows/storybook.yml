@@ -84,13 +84,22 @@ jobs:
         run: npm i -g @marp-team/marp-cli
 
       - name: Build HTML
-        run: marp --html slides/story.md -o dist/index.html
+        run: |
+          marp slides/story.md --html --output dist/index.html
+          echo "Generated HTML file:"
+          ls -la dist/index.html
+          echo "First 5 lines of HTML:"
+          head -n 5 dist/index.html
 
       - name: Copy images (if any)
         run: |
           if [ -d slides/images ]; then
             mkdir -p dist/images
             cp -r slides/images/* dist/images/
+            echo "Copied images from slides/images/ to dist/images/"
+            ls -la dist/images/
+          else
+            echo "No images directory found in slides/"
           fi
 
       - name: Upload Pages artifact
