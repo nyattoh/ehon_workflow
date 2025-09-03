@@ -121,8 +121,15 @@ jobs:
             exit 1
           fi
 
-      - name: Copy images (if any)
+      - name: Copy images and markdown (if any)
         run: |
+          # Copy markdown file to dist
+          if [ -f slides/story.md ]; then
+            cp slides/story.md dist/
+            echo "Copied story.md to dist/"
+          fi
+          
+          # Copy images if any
           if [ -d slides/images ]; then
             mkdir -p dist/images
             cp -r slides/images/* dist/images/
@@ -134,6 +141,10 @@ jobs:
           else
             echo "No images directory found in slides/"
           fi
+          
+          # Show final dist contents
+          echo "Final dist directory contents:"
+          ls -la dist/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
