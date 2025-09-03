@@ -2,7 +2,7 @@
 import argparse
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List
 
 
@@ -71,7 +71,7 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
 
 
 def build_marp_template(title: str, synopsis: str) -> str:
-    now = datetime.utcnow().strftime('%Y-%m-%d')
+    now = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     return f'''---
 marp: true
 title: {title}
@@ -102,31 +102,38 @@ theme: default
 
 
 def _split_slides(marp_md: str) -> List[str]:
-    # Split by slide delimiter '---' while keeping content grouped
-    parts: List[str] = []
-    current: List[str] = []
-    for line in marp_md.splitlines():
-        if line.strip() == '---':
-            if current:
-                parts.append('\n'.join(current).strip('\n'))
-                current = []
-            parts.append('---')  # delimiter marker
-        else:
-            current.append(line)
-    if current:
-        parts.append('\n'.join(current).strip('\n'))
-    # Reconstruct slides: first chunk is frontmatter block, then alternating delimiter/content
+    lines = marp_md.splitlines()
     slides: List[str] = []
-    buf: List[str] = []
-    for chunk in parts:
-        if chunk == '---':
-            if buf:
-                slides.append('\n'.join(buf).strip('\n'))
-                buf = []
+    current_slide: List[str] = []
+    in_frontmatter = False
+    frontmatter_done = False
+    
+    for line in lines:
+        if line.strip() == '---':
+            if not frontmatter_done:
+                # First --- starts frontmatter
+                if not in_frontmatter:
+                    in_frontmatter = True
+                    current_slide.append(line)
+                else:
+                    # Second --- ends frontmatter and starts first slide
+                    in_frontmatter = False
+                    frontmatter_done = True
+                    current_slide.append(line)
+                    slides.append('\n'.join(current_slide))
+                    current_slide = []
+            else:
+                # Subsequent --- are slide separators
+                if current_slide:
+                    slides.append('\n'.join(current_slide))
+                    current_slide = []
         else:
-            buf.append(chunk)
-    if buf:
-        slides.append('\n'.join(buf).strip('\n'))
+            current_slide.append(line)
+    
+    # Add the last slide if it exists
+    if current_slide:
+        slides.append('\n'.join(current_slide))
+    
     return slides
 
 
@@ -171,7 +178,7 @@ def embed_placeholders_and_images(marp_md: str, out_md_path: str) -> str:
     new_slides: List[str] = []
     for idx, slide in enumerate(slides):
         if idx == 0:
-            # keep frontmatter/title slide as-is
+            # keep frontmatter as-is (no image needed)
             new_slides.append(slide)
             continue
         label = _first_text_line(slide) or f'Slide {idx+1}'
@@ -183,7 +190,14 @@ def embed_placeholders_and_images(marp_md: str, out_md_path: str) -> str:
         augmented = f'![illustration]({rel})\n\n{slide}'.strip()
         new_slides.append(augmented)
     # Reassemble with separators
-    return ('\n---\n\n').join(new_slides).strip() + '\n'
+    if len(new_slides) == 1:
+        return new_slides[0] + '\n'
+    else:
+        # First slide (frontmatter) already ends with ---, so just add content slides
+        result = new_slides[0] + '\n\n'
+        # Add remaining slides with separators
+        result += ('\n---\n\n').join(new_slides[1:])
+        return result + '\n'
 
 
 def main():
