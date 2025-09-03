@@ -67,9 +67,15 @@ jobs:
           # Verify the generated markdown file
           if [ -f "slides/story.md" ]; then
             echo "Markdown file generated successfully:"
-            head -10 "slides/story.md"
+            echo "File size: $(wc -c < slides/story.md) bytes"
+            echo "First 20 lines:"
+            head -20 "slides/story.md"
+            echo "Last 10 lines:"
+            tail -10 "slides/story.md"
           else
             echo "Error: Markdown file not generated"
+            echo "Contents of slides/ directory:"
+            ls -la slides/ || echo "slides/ directory does not exist"
             exit 1
           fi
           

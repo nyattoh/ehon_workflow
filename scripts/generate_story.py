@@ -220,6 +220,8 @@ def main():
         try:
             content = build_marp_from_gemini(title, synopsis, args.model, api_key)
             print('[INFO] Gemini generation successful', file=sys.stderr)
+            print(f'[DEBUG] Generated content length: {len(content)} characters', file=sys.stderr)
+            print(f'[DEBUG] First 200 characters: {content[:200]}', file=sys.stderr)
         except Exception as e:
             print(f"[WARN] Gemini generation failed, falling back to template: {e}", file=sys.stderr)
             import traceback
