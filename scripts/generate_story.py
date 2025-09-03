@@ -52,12 +52,15 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
     # Pass system instruction at model creation (Gemini does not accept a "system" role in messages)
     model = genai.GenerativeModel(model_name, system_instruction=system_preamble)
     user_prompt = f'''次の題名とあらすじから、Marp対応のMarkdownスライドを生成してください。
+
+【重要】以下の形式を厳密に守ってください：
 - スライド1: タイトルだけ大きく（著者名は省略可）
-- スライド2以降: 1枚に2〜5行、やさしい短文で。
+- スライド2〜8: 1枚に2〜5行、やさしい短文で。各スライドの間に必ず「---」を入れる
 - 最後のスライド: おわり と ひとこと（前向きな締め）
 - 画像は入れない（テキストのみ）
-- 出力にはMarpフロントマターを必ず含める（marp: true, title, paginate: true）。
-- 重要: コードブロック（```markdown）で囲まず、生のMarkdownテキストのみを出力してください。
+- 出力にはMarpフロントマターを必ず含める（marp: true, title, paginate: true）
+- 重要: コードブロック（```markdown）で囲まず、生のMarkdownテキストのみを出力してください
+- 重要: 各スライドの間に必ず「---」を入れて、最低6〜8枚のスライドを作成してください
 
 題名: {title}
 あらすじ:
@@ -68,6 +71,11 @@ def build_marp_from_gemini(title: str, synopsis: str, model_name: str, api_key: 
     text = getattr(res, 'text', None) or (res.candidates[0].content.parts[0].text if getattr(res, 'candidates', None) else None)
     if not text:
         raise RuntimeError('Empty response from Gemini')
+    
+    # Debug: Print raw Gemini output
+    print(f'[DEBUG] Raw Gemini output length: {len(text)} characters', file=sys.stderr)
+    print(f'[DEBUG] Raw Gemini output (first 500 chars): {text[:500]}', file=sys.stderr)
+    print(f'[DEBUG] Raw Gemini output (last 200 chars): {text[-200:]}', file=sys.stderr)
     
     # Remove code block markers if present
     if text.startswith('```markdown'):
