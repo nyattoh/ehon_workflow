@@ -97,7 +97,10 @@ jobs:
             mkdir -p dist/images
             cp -r slides/images/* dist/images/
             echo "Copied images from slides/images/ to dist/images/"
+            echo "Image files found:"
             ls -la dist/images/
+            echo "File types:"
+            file dist/images/* 2>/dev/null || echo "No files to check"
           else
             echo "No images directory found in slides/"
           fi
