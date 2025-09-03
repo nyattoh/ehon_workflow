@@ -2,6 +2,7 @@
 .cursor/
 .cursorignore
 .cursorindexingignore
+.specstory/
 
 github-pages.zip
 screenshot.png
